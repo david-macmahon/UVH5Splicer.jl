@@ -1,0 +1,13 @@
+name = "UVH5Splicer"
+uuid = "6b680148-7462-4608-a556-0b25ffd4b96b"
+authors = ["David MacMahon <davidm@astro.berkeley.edu> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1.6"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
