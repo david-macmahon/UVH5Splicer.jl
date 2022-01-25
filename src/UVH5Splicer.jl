@@ -49,17 +49,14 @@ function splice_datset_by_frequency(h5out, h5ins, name, outdims)
     # Create dataspace for virtual dataset
     vspace = dataspace(outdims) # (Npols, Nfreqsout, Nbltsout)
     # Create dataset creation property list for virtual dataset
-    #dcpl = HDF5.h5p_create(HDF5.H5P_DATASET_CREATE)
     dcpl = create_property(HDF5.H5P_DATASET_CREATE)
     # Create source dataspace based on Nfreqs of first dataset
     nfreqin = h5ins[1]["Header/Nfreqs"][]
-    sspace = dataspace(outdims[1], nfreqin, outdims[3])
+    sspace = dataspace(h5ins[1][name])
+    sspace = HDF5.hyperslab(sspace, 1:outdims[1], 1:nfreqin, 1:outdims[3])
+
     # Setup hyperslab parameters
-    # NB: low level HDF5 functions use 0-based indexing!
-    # NB: low level HDF5 functions use C ordering of dimensions!
-    voffset = [0, 0, 0] # [blt, freq, pol]
-    vstride = [1, 1, 1]
-    vcount = [1, 1, 1]
+    freq_offset = 0
 
     # Map regions of vspace to regions in source files/datasets
     for h5 in h5ins
@@ -67,18 +64,19 @@ function splice_datset_by_frequency(h5out, h5ins, name, outdims)
         if nfreqin != h5["Header/Nfreqs"][]
             nfreqin = h5["Header/Nfreqs"][]
             close(sspace)
-            sspace = dataspace(outdims[1], nfreqin, outdims[3])
+            sspace = dataspace(h5ins[1][name])
+            sspace = HDF5.hyperslab(sspace, 1:outdims[1], 1:nfreqin, 1:outdims[3])
         end
+
         # Select hyperslab in virtual dataspace
-        # NB: low level HDF5 functions use 0-based indexing!
-        # NB: low level HDF5 functions use C ordering of dimensions!
-        vblock = [outdims[3], nfreqin, outdims[1]]
-        HDF5.h5s_select_hyperslab(vspace, HDF5.H5S_SELECT_SET,
-                                  voffset, vstride, vcount, vblock)
+        mapspace = HDF5.hyperslab(copy(vspace), 1:outdims[1], (1:nfreqin).+freq_offset, 1:outdims[3])
+
         # Map it!
-        HDF5.h5p_set_virtual(dcpl, vspace, HDF5.filename(h5), name, sspace)
-        # Adjust voffset
-        voffset[2] += nfreqin
+        HDF5.h5p_set_virtual(dcpl, mapspace, HDF5.filename(h5), name, sspace)
+        close(mapspace)
+
+        # Adjust freq_offset
+        freq_offset += nfreqin
     end
     # Close source dataspace
     close(sspace)
