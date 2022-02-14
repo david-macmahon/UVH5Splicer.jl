@@ -33,7 +33,7 @@ end
 
 """
     check_commensurate(hdrs, check_names)
- 
+
 Check that the datasets listed in `check_names` in the `hdrs` are equal.
 Returns an Array of `check_names` datasets that are not equal across all `hdrs`,
 which will be empty if all the datasets are equal across all headers.
@@ -43,7 +43,7 @@ function check_commensurate(hdrs, check_names)
     check_names[.!oks]
 end
 
-function splice_datset_by_frequency(h5out, h5ins, name, outdims)
+function splice_dataset_by_frequency(h5out, h5ins, name, outdims)
     # Create data type for virtual dataset
     vtype = datatype(h5ins[1][name])
     # Create dataspace for virtual dataset
@@ -89,7 +89,7 @@ function splice_datset_by_frequency(h5out, h5ins, name, outdims)
     # TODO Ensure links are created with UTF8 cset encoding?
     HDF5.h5d_create(h5out, name, vtype, vspace,
                     HDF5.DEFAULT_PROPERTIES, dcpl, HDF5.DEFAULT_PROPERTIES)
-    
+
     # Close up
     close(vtype)
     close(vspace)
@@ -198,7 +198,7 @@ function uvh5_splice(outfile, infiles)
     Npols = hdrins[1]["Npols"][]
     for name in ("visdata", "flags", "nsamples")
         @info "splicing $name"
-        splice_datset_by_frequency(h5out, h5ins, "/Data/$name", (Npols, Nfreqsout, Nbltsout))
+        splice_dataset_by_frequency(h5out, h5ins, "/Data/$name", (Npols, Nfreqsout, Nbltsout))
     end
 
     # Close input files and output file
